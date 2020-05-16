@@ -1,1 +1,5 @@
-# circle_and_line_detection_with_Hough_Transform
+# Circle and Line Detection With Hough Transform
+
+* GUI: Windows Form Application / C++
+* Gaussian Bluring 
+* Canny Edge Detection
