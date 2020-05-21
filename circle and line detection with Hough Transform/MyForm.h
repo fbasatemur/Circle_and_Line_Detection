@@ -44,7 +44,7 @@ namespace Form_Empty {
 				delete components;
 			}
 		}
-	
+
 	private: System::Windows::Forms::MenuStrip^ menuStrip1;
 	protected:
 	private: System::Windows::Forms::OpenFileDialog^ openFileDialog1;
@@ -62,6 +62,12 @@ namespace Form_Empty {
 	private: System::Windows::Forms::Label^ label2;
 	private: System::Windows::Forms::RadioButton^ radioBLine;
 	private: System::Windows::Forms::RadioButton^ radioBCircle;
+	private: System::Windows::Forms::Label^ label3;
+	private: System::Windows::Forms::Label^ label4;
+
+
+
+
 
 
 
@@ -70,7 +76,7 @@ namespace Form_Empty {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		System::ComponentModel::Container ^components;
+		System::ComponentModel::Container^ components;
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -79,9 +85,9 @@ namespace Form_Empty {
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataVisualization::Charting::ChartArea^ chartArea1 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
-			System::Windows::Forms::DataVisualization::Charting::Legend^ legend1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Legend());
-			System::Windows::Forms::DataVisualization::Charting::Series^ series1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+			System::Windows::Forms::DataVisualization::Charting::ChartArea^ chartArea5 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
+			System::Windows::Forms::DataVisualization::Charting::Legend^ legend5 = (gcnew System::Windows::Forms::DataVisualization::Charting::Legend());
+			System::Windows::Forms::DataVisualization::Charting::Series^ series5 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 			this->openFileDialog1 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
 			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -97,6 +103,8 @@ namespace Form_Empty {
 			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->radioBLine = (gcnew System::Windows::Forms::RadioButton());
 			this->radioBCircle = (gcnew System::Windows::Forms::RadioButton());
+			this->label3 = (gcnew System::Windows::Forms::Label());
+			this->label4 = (gcnew System::Windows::Forms::Label());
 			this->menuStrip1->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox1))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->pictureBox2))->BeginInit();
@@ -153,16 +161,16 @@ namespace Form_Empty {
 			// 
 			// chart1
 			// 
-			chartArea1->Name = L"ChartArea1";
-			this->chart1->ChartAreas->Add(chartArea1);
-			legend1->Name = L"Legend1";
-			this->chart1->Legends->Add(legend1);
+			chartArea5->Name = L"ChartArea1";
+			this->chart1->ChartAreas->Add(chartArea5);
+			legend5->Name = L"Legend1";
+			this->chart1->Legends->Add(legend5);
 			this->chart1->Location = System::Drawing::Point(834, 31);
 			this->chart1->Name = L"chart1";
-			series1->ChartArea = L"ChartArea1";
-			series1->Legend = L"Legend1";
-			series1->Name = L"Gradient Hist";
-			this->chart1->Series->Add(series1);
+			series5->ChartArea = L"ChartArea1";
+			series5->Legend = L"Legend1";
+			series5->Name = L"Gradient Hist";
+			this->chart1->Series->Add(series5);
 			this->chart1->Size = System::Drawing::Size(409, 207);
 			this->chart1->TabIndex = 3;
 			this->chart1->Text = L"chart1";
@@ -188,7 +196,7 @@ namespace Form_Empty {
 			// label1
 			// 
 			this->label1->AutoSize = true;
-			this->label1->Location = System::Drawing::Point(948, 312);
+			this->label1->Location = System::Drawing::Point(949, 311);
 			this->label1->Name = L"label1";
 			this->label1->Size = System::Drawing::Size(56, 17);
 			this->label1->TabIndex = 7;
@@ -196,7 +204,7 @@ namespace Form_Empty {
 			// 
 			// textBCircleR
 			// 
-			this->textBCircleR->Location = System::Drawing::Point(1036, 312);
+			this->textBCircleR->Location = System::Drawing::Point(1035, 311);
 			this->textBCircleR->Name = L"textBCircleR";
 			this->textBCircleR->Size = System::Drawing::Size(100, 22);
 			this->textBCircleR->TabIndex = 8;
@@ -204,7 +212,7 @@ namespace Form_Empty {
 			// 
 			// textBMaxEdge
 			// 
-			this->textBMaxEdge->Location = System::Drawing::Point(1036, 344);
+			this->textBMaxEdge->Location = System::Drawing::Point(1035, 343);
 			this->textBMaxEdge->Name = L"textBMaxEdge";
 			this->textBMaxEdge->Size = System::Drawing::Size(100, 22);
 			this->textBMaxEdge->TabIndex = 10;
@@ -223,7 +231,7 @@ namespace Form_Empty {
 			// radioBLine
 			// 
 			this->radioBLine->AutoSize = true;
-			this->radioBLine->Location = System::Drawing::Point(1036, 383);
+			this->radioBLine->Location = System::Drawing::Point(955, 387);
 			this->radioBLine->Name = L"radioBLine";
 			this->radioBLine->Size = System::Drawing::Size(56, 21);
 			this->radioBLine->TabIndex = 11;
@@ -234,7 +242,7 @@ namespace Form_Empty {
 			// 
 			this->radioBCircle->AutoSize = true;
 			this->radioBCircle->Checked = true;
-			this->radioBCircle->Location = System::Drawing::Point(1036, 410);
+			this->radioBCircle->Location = System::Drawing::Point(1035, 387);
 			this->radioBCircle->Name = L"radioBCircle";
 			this->radioBCircle->Size = System::Drawing::Size(64, 21);
 			this->radioBCircle->TabIndex = 12;
@@ -242,11 +250,31 @@ namespace Form_Empty {
 			this->radioBCircle->Text = L"Circle";
 			this->radioBCircle->UseVisualStyleBackColor = true;
 			// 
+			// label3
+			// 
+			this->label3->AutoSize = true;
+			this->label3->Location = System::Drawing::Point(848, 427);
+			this->label3->Name = L"label3";
+			this->label3->Size = System::Drawing::Size(164, 17);
+			this->label3->TabIndex = 13;
+			this->label3->Text = L"Num of Detected Circles:";
+			// 
+			// label4
+			// 
+			this->label4->AutoSize = true;
+			this->label4->Location = System::Drawing::Point(1033, 427);
+			this->label4->Name = L"label4";
+			this->label4->Size = System::Drawing::Size(16, 17);
+			this->label4->TabIndex = 14;
+			this->label4->Text = L"0";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(1278, 855);
+			this->Controls->Add(this->label4);
+			this->Controls->Add(this->label3);
 			this->Controls->Add(this->radioBCircle);
 			this->Controls->Add(this->radioBLine);
 			this->Controls->Add(this->textBMaxEdge);
@@ -262,6 +290,7 @@ namespace Form_Empty {
 			this->MainMenuStrip = this->menuStrip1;
 			this->Margin = System::Windows::Forms::Padding(4);
 			this->Name = L"MyForm";
+			this->StartPosition = System::Windows::Forms::FormStartPosition::CenterScreen;
 			this->Text = L"MyForm";
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
@@ -307,31 +336,31 @@ namespace Form_Empty {
 			//int gaussianFilter[9] = { 1,2,1,2,4,2,1,2,1 }; // -> 1. mert gaussian
 			int gaussianFilter[9] = { 2,1,2,1,4,1,2,1,2 };
 			int* smoothImage = smoothing(raw_intensity, width, height, gaussianFilter, 3, 16);
-			
-																				// x ve y yonundeki gradient matrisleri
+
+			// x ve y yonundeki gradient matrisleri
 			int gradientX[9] = { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
 			int gradientY[9] = { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
-																				// kenar ve yon matrisleri, size = (size - gradient_mask + 1)
+			// kenar ve yon matrisleri, size = (size - gradient_mask + 1)
 			int* magnitudeImage = new int[(width - 2) * (height - 2)];
 			int* gradientDirection = new int[(width - 2) * (height - 2)];
 			int* directions = new int[(width - 2) * (height - 2)];
-																				// gradient ve direction bilgileri alinir
+			// gradient ve direction bilgileri alinir
 
-			magnitudeAndDirection(smoothImage, width, height, gradientX, gradientY, magnitudeImage, gradientDirection,directions, 3);
+			magnitudeAndDirection(smoothImage, width, height, gradientX, gradientY, magnitudeImage, gradientDirection, directions, 3);
 
-																				// gradient bilgisinden, histogram bilgisini olustur
+			// gradient bilgisinden, histogram bilgisini olustur
 			int* gradientHist = createHistMatris(magnitudeImage, width, height, 1020);
 
 			chart1->Series["Gradient Hist"]->Points->Clear();
 			for (int i = 0; i < 1020; i++) {
 				chart1->Series["Gradient Hist"]->Points->AddXY(i, gradientHist[i]);
 			}
-																				
-																				// Canny edge detection 
+
+			// Canny edge detection 
 			magnitudeImage = nonMaximalSuppression(magnitudeImage, gradientDirection, width, height);
-			
+
 			hysteresisThreashold(magnitudeImage, gradientDirection, width, height, 120, 110);
-			
+
 
 			Bitmap^ surfaceBmp2 = gcnew Bitmap(width, height);
 			pictureBox2->Image = surfaceBmp2;
@@ -345,13 +374,13 @@ namespace Form_Empty {
 			std::vector<int>maxsQ;
 
 			int numOfMaxEdge = Convert::ToInt16(textBMaxEdge->Text);
-			
+
 
 			if (radioBLine->Checked)
 			{
 				houghSpace = houghTransformLine(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, houghWidth, houghHeight);
 
-				searchMaxEdge(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
+				searchMaxPoint(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
 
 				controlMaxEdge(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, maxsD, maxsQ);
 
@@ -364,15 +393,17 @@ namespace Form_Empty {
 			{
 				int circleR = Convert::ToInt16(textBCircleR->Text);
 
-				houghSpace = houghTransformCircle(magnitudeImage, gradientDirection,directions, width, height, houghWidth, houghHeight, circleR, imageWidth, imageHeight);
-				searchMaxEdge(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
-				controlMaxCircle(raw_intensity,imageWidth,imageHeight, magnitudeImage, width, height, maxsD, maxsQ, circleR);
+				houghSpace = houghTransformCircle(magnitudeImage, gradientDirection, directions, width, height, houghWidth, houghHeight, circleR, imageWidth, imageHeight);
+				searchMaxPoint(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
+				int detectedCircles = controlMaxCircle(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, maxsD, maxsQ, circleR);
+				 
+				label4->Text = Convert::ToString(detectedCircles);
 
 				Bitmap^ surfaceBmp4 = gcnew Bitmap(imageWidth, imageHeight);
 				pictureBox4->Image = surfaceBmp4;
 				displayLineBitmap(raw_intensity, imageWidth, imageHeight, surfaceBmp4);
 			}
-			
+
 			Bitmap^ surfaceBmp3 = gcnew Bitmap(houghWidth, houghHeight);
 			pictureBox3->Image = surfaceBmp3;
 			displayHoughBitmap(houghSpace, houghWidth, houghHeight, surfaceBmp3);

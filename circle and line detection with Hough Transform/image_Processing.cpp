@@ -8,6 +8,8 @@
 #define MIN(a,b) ((a < b) ? a : b)
 #define MAX(a,b) ((a > b) ? a : b)
 #define REDPIXEL 2
+#define ANGLEQUANTIZE 5
+#define DISTQUANTIZE 10
 
 //int* sobelFilter(int* raw_intensity, int& Width, int& Height, int* gradientX, int* gradientY, int filterSize)
 //{
@@ -399,31 +401,33 @@ int* houghTransformLine(BYTE* raw_intensity, int imageW, int imageH, int* binary
 	return houghSpace;
 }
 
-bool isExist(std::vector <int>& MaxsTemp, int value)
+bool isExist(std::vector <int>& MaxsTemp, std::vector <int>& MaxsD, std::vector <int>& MaxsQ, int value, int d, int Q)
 {
 	for (int i = 0; i < MaxsTemp.size(); i++)
 	{
-		if (MaxsTemp[i] == value)
+		if ((d - DISTQUANTIZE <= MaxsD[i] && MaxsD[i] <= d + DISTQUANTIZE) && (Q - ANGLEQUANTIZE <= MaxsQ[i] && MaxsQ[i] <= Q + ANGLEQUANTIZE))
 			return true;
 	}
-	
 	return false;
 }
 
-void searchMaxEdge(int* houghSpace, int houghWidth, int houghHeight, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int numOfMaks)
+void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int numOfMaks)
 {
-	int tempD = 0, tempQ = 0, temp = 0;
+	int tempD = 0, tempQ = 0, temp = 0, temp2 = 0;
 	std::vector <int> MaxsTemp;
+
+
 	while (MaxsD.size() < numOfMaks)
 	{
 		tempD = 0;
 		tempQ = 0;
 		temp = 0;
+		temp2 = temp;
 		for (int d = 0; d < houghHeight; d++)
 		{
 			for (int Q = 0; Q < houghWidth; Q++)
 			{
-				if (houghSpace[d * houghWidth + Q] > temp && !isExist(MaxsTemp, houghSpace[d * houghWidth + Q]))
+				if (houghSpace[d * houghWidth + Q] >= temp && !isExist(MaxsTemp, MaxsD, MaxsQ, houghSpace[d * houghWidth + Q], d, Q))
 				{
 					tempD = d;
 					tempQ = Q;
@@ -431,10 +435,14 @@ void searchMaxEdge(int* houghSpace, int houghWidth, int houghHeight, std::vector
 				}
 			}
 		}
+
+		if (temp == temp2)
+			break;
+
 		MaxsTemp.push_back(temp);
 		MaxsD.push_back(tempD);
 		MaxsQ.push_back(tempQ);
-	}	
+	}
 }
 
 void controlMaxEdge(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ)
@@ -582,26 +590,21 @@ int* houghTransformCircle(int* binaryImage, int* gradientDirections, int* direct
 {
 	int imDiff = (imageW - Width) / 2;
 
-	houghHeight = (int)(imageW * cos(atan2(imageH, imageW)) + imageH * sin(atan2(imageH, imageW)));		// goruntudeki max kosegen uzakligi 
+	houghHeight = (int)(sqrt(imageH * imageH + imageW * imageW));											// goruntudeki max kosegen uzakligi 
+
 	houghWidth = 180;																					// [0,45,90,135]
 
 	int* houghSpace = (int*)calloc(houghHeight * houghWidth, sizeof(int));
 
 	int distance = 0;
 	int a = 0, b = 0;
+
 	for (int row = 0; row < Height; row++)
 	{
 		for (int col = 0; col < Width; col++)
 		{
 			if (binaryImage[row * Width + col] == 1)
 			{
-				/*a = col + circleR * cos(directions[row * Width + col] * PI / 180);
-				b = row + circleR * sin(directions[row * Width + col] * PI / 180);
-
-				distance = distanceQuantize(abs(a * cos(atan2(b, a)) + b * sin(atan2(b, a))));
-				houghSpace[distance * houghWidth + int(atan2(b, a) * (180 / PI))]++;*/
-
-
 				if (180 < directions[row * Width + col] <= 270)
 				{
 					a = col + circleR * abs(cos((directions[row * Width + col] - 180) * PI / 180));
@@ -626,7 +629,7 @@ int* houghTransformCircle(int* binaryImage, int* gradientDirections, int* direct
 					b = row + circleR * abs(sin((90 - (directions[row * Width + col] - 270)) * PI / 180));
 
 				}
-				distance = distanceQuantize(abs(a * cos(atan2(b, a)) + b * sin(atan2(b, a))));
+				distance = a * cos(atan2(b, a)) + b * sin(atan2(b, a));
 				houghSpace[distance * houghWidth + int(atan2(b, a) * (180 / PI))]++;
 			}
 		}
@@ -651,24 +654,16 @@ void drawCircle(BYTE* buffer, int width, int x, int y, int radius)
 
 	for (int angle = 0; angle < 360; angle++)
 	{
-		try
-		{
-			x = tempX;
-			y = tempY;
+		x = tempX;
+		y = tempY;
 
-			newCoordinate(x, y, angle, radius);
+		newCoordinate(x, y, angle, radius);
 
-			buffer[y * width + x] = REDPIXEL;
-
-		}
-		catch (const std::exception & error)
-		{
-			std::cout << error.what() << std::endl;
-		}
+		buffer[y * width + x] = REDPIXEL;
 	}
 }
 
-void controlMaxCircle(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int circleR)
+int controlMaxCircle(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int circleR)
 {
 	int imDiff = (imWidth - Width) / 2;
 	for (int i = 0; i < MaxsD.size(); i++)
@@ -683,4 +678,5 @@ void controlMaxCircle(BYTE* raw_intensity, int imWidth, int imHeight, int* binar
 		drawCircle(raw_intensity, imWidth, col + imDiff, row + imDiff, circleR);
 
 	}
+	return MaxsD.size();
 }
