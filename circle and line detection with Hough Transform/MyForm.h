@@ -321,46 +321,61 @@ namespace Form_Empty {
 			long Size;
 
 			CString filePathStr;
-
-			// dosya secmek icin openfiledialog olusturuldu ve secilen dosyanin adresi aliniyor
+			
 			filePathStr = openFileDialog1->FileName;
 
 			input = (LPCTSTR)filePathStr;
 
 			BYTE* buffer = LoadBMP((int%)width, (int%)height, (long%)Size, input);
 			BYTE* raw_intensity = ConvertBMPToIntensity(buffer, width, height);
+																							// orjinal image boyutlarini depola
 			int imageWidth = width;
 			int imageHeight = height;
 
 
-			//int gaussianFilter[9] = { 1,2,1,2,4,2,1,2,1 }; // -> 1. mert gaussian
+			//int gaussianFilter[9] = { 1,2,1,2,4,2,1,2,1 };								// -> 1. mert gaussian
 			int gaussianFilter[9] = { 2,1,2,1,4,1,2,1,2 };
 			int* smoothImage = smoothing(raw_intensity, width, height, gaussianFilter, 3, 16);
 
-			// x ve y yonundeki gradient matrisleri
+			
+			// x ve y yonundeki gradient matrisleri 3 * 3
+			
 			int gradientX[9] = { -1, 0, 1, -2, 0, 2, -1, 0, 1 };
 			int gradientY[9] = { -1, -2, -1, 0, 0, 0, 1, 2, 1 };
-			// kenar ve yon matrisleri, size = (size - gradient_mask + 1)
-			int* magnitudeImage = new int[(width - 2) * (height - 2)];
-			int* gradientDirection = new int[(width - 2) * (height - 2)];
-			int* directions = new int[(width - 2) * (height - 2)];
-			// gradient ve direction bilgileri alinir
+																							 
+			
+			// size = (size - gradient_mask_size + 1)
 
-			magnitudeAndDirection(smoothImage, width, height, gradientX, gradientY, magnitudeImage, gradientDirection, directions, 3);
+			int* magnitudeImage = new int[(width - 2) * (height - 2)];						// kenar matrisi
+			int* quantizedGradientDir = new int[(width - 2) * (height - 2)];				// [0, 45, 90, 135] acilarina quantize edilmis gradient yon bilgileri
+			int* gradientDir = new int[(width - 2) * (height - 2)];							// Quantize yapilmamis gradient yon bilgileri
+			
+			
+			// kenar ve yon bilgileri bulunur
+			
+			magnitudeAndDirection(smoothImage, width, height, gradientX, gradientY, magnitudeImage, quantizedGradientDir, gradientDir, 3);
 
+			
 			// gradient bilgisinden, histogram bilgisini olustur
+			
 			int* gradientHist = createHistMatris(magnitudeImage, width, height, 1020);
+
+			// draw chart
 
 			chart1->Series["Gradient Hist"]->Points->Clear();
 			for (int i = 0; i < 1020; i++) {
 				chart1->Series["Gradient Hist"]->Points->AddXY(i, gradientHist[i]);
 			}
 
-			// Canny edge detection 
-			magnitudeImage = nonMaximalSuppression(magnitudeImage, gradientDirection, width, height);
+			// Canny edge detection ///////////////////////
+			
+			magnitudeImage = nonMaximalSuppression(magnitudeImage, quantizedGradientDir, width, height);
 
-			hysteresisThreashold(magnitudeImage, gradientDirection, width, height, 120, 110);
+			hysteresisThreashold(magnitudeImage, quantizedGradientDir, width, height, 120, 110);
 
+			///////////////////////////////////////////////
+
+			// display magnitude image
 
 			Bitmap^ surfaceBmp2 = gcnew Bitmap(width, height);
 			pictureBox2->Image = surfaceBmp2;
@@ -370,19 +385,20 @@ namespace Form_Empty {
 			int houghWidth = 0;
 			int houghHeight = 0;
 			int* houghSpace;
-			std::vector<int>maxsD;
-			std::vector<int>maxsQ;
+			std::vector<int>maxsD;			// maximum distance
+			std::vector<int>maxsQ;			// angle
 
 			int numOfMaxEdge = Convert::ToInt16(textBMaxEdge->Text);
 
 
 			if (radioBLine->Checked)
 			{
-				houghSpace = houghTransformLine(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, houghWidth, houghHeight);
+
+				houghSpace = houghTransformLine(magnitudeImage, width, height, imageWidth, imageHeight, houghWidth, houghHeight);
 
 				searchMaxPoint(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
 
-				controlMaxEdge(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, maxsD, maxsQ);
+				controlMaxEdge(raw_intensity, imageWidth, magnitudeImage, width, height, maxsD, maxsQ);
 
 				Bitmap^ surfaceBmp4 = gcnew Bitmap(imageWidth, imageHeight);
 				pictureBox4->Image = surfaceBmp4;
@@ -393,9 +409,11 @@ namespace Form_Empty {
 			{
 				int circleR = Convert::ToInt16(textBCircleR->Text);
 
-				houghSpace = houghTransformCircle(magnitudeImage, gradientDirection, directions, width, height, houghWidth, houghHeight, circleR, imageWidth, imageHeight);
+				houghSpace = houghTransformCircle(magnitudeImage, gradientDir, width, height, houghWidth, houghHeight, circleR, imageWidth, imageHeight);
+				
 				searchMaxPoint(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
-				int detectedCircles = controlMaxCircle(raw_intensity, imageWidth, imageHeight, magnitudeImage, width, height, maxsD, maxsQ, circleR);
+				
+				int detectedCircles = drawMaxCircle(raw_intensity, imageWidth, width, maxsD, maxsQ, circleR);
 				 
 				label4->Text = Convert::ToString(detectedCircles);
 
@@ -403,6 +421,8 @@ namespace Form_Empty {
 				pictureBox4->Image = surfaceBmp4;
 				displayLineBitmap(raw_intensity, imageWidth, imageHeight, surfaceBmp4);
 			}
+
+			// draw hough space
 
 			Bitmap^ surfaceBmp3 = gcnew Bitmap(houghWidth, houghHeight);
 			pictureBox3->Image = surfaceBmp3;

@@ -42,18 +42,11 @@
 //	return smoothImage;
 //}
 
-int* createHistMatris(int* rawIndensity, int width, int height, int histSize)
-{
-	int* hist = (int*)calloc(histSize, sizeof(int));
-
-	for (int i = 0; i < width * height; i++)
-		hist[rawIndensity[i]]++;
-
-	return hist;
-}
-
 int* smoothing(BYTE* raw_intensity, int& Width, int& Height, int* smoothFilter, int filterSize, int divisor)
 {
+	// image in yeni boyutu : 
+	// newSize = (( imageSize + 2 * pooling - filterSize) / stepSize ) + 1
+
 	int newWidth = (Width - filterSize + 1);
 	int newHeight = (Height - filterSize + 1);
 	int* smoothImage = new int[newWidth * newHeight];
@@ -80,281 +73,10 @@ int* smoothing(BYTE* raw_intensity, int& Width, int& Height, int* smoothFilter, 
 	return smoothImage;
 }
 
-void magnitudeAndDirection(int* raw_intensity, int& Width, int& Height, int* gradientX, int* gradientY, int* magnitudeImage, int* directionImage, int* directions, int filterSize)
-{
-	int newWidth = (Width - filterSize + 1);
-	int newHeight = (Height - filterSize + 1);
-
-	int totalX = 0;
-	int totalY = 0;
-	for (int row = 0; row < newHeight; row++)
-	{
-		for (int col = 0; col < newWidth; col++)
-		{
-			totalX = 0;
-			totalY = 0;
-			for (int i = 0; i < filterSize; i++)
-			{
-				for (int j = 0; j < filterSize; j++)
-				{
-					totalX += raw_intensity[(row + i) * Width + col + j] * gradientX[i * filterSize + j];
-					totalY += raw_intensity[(row + i) * Width + col + j] * gradientY[i * filterSize + j];
-				}
-			}
-			magnitudeImage[row * newWidth + col] = abs(totalX) + abs(totalY);
-
-			int direction = (int)(atan2(totalY, totalX) * 180 / PI);
-			directions[row * newWidth + col] = (direction + 360) % 360;
-			directionImage[row * newWidth + col] = directionQuantize(direction + 360);
-		}
-	}
-
-	Width = newWidth;
-	Height = newHeight;
-}
-
-void displayBinaryBitmap(int* intensityMat, int Width, int Height, System::Drawing::Bitmap^ bitmap)
-{
-	System::Drawing::Color color;
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			if (intensityMat[row * Width + col] == 0)
-				color = System::Drawing::Color::FromArgb(0, 0, 0);
-			else
-				color = System::Drawing::Color::FromArgb(255, 255, 255);
-
-			bitmap->SetPixel(col, row, color);
-		}
-	}
-}
-
-void deepCopy(int* hostMem, int* copyMem, int Width, int Height)
-{
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			copyMem[row * Width + col] = hostMem[row * Width + col];
-		}
-	}
-}
-
-int* nonMaximalSuppression(int* magnitudeImage, int* gradientDirections, int Width, int Height)
-{
-	// deep copy
-	int* copyMagnitude = new int[Width * Height];
-	deepCopy(magnitudeImage, copyMagnitude, Width, Height);
-
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			if (magnitudeImage[row * Width + col] != 0)
-				switch (gradientDirections[row * Width + col])
-				{
-
-				case 0:
-					if (col == 0)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[row * Width + col + 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (col == Width - 1)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[row * Width + col - 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (magnitudeImage[row * Width + col] <= magnitudeImage[row * Width + col - 1] || magnitudeImage[row * Width + col] <= magnitudeImage[row * Width + col + 1])
-						copyMagnitude[row * Width + col] = 0;
-
-					break;
-
-				case 45:
-
-					if (row == 0 && col < Width - 1 || col == 0 && row < Height - 1)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col + 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (row == Height - 1 && col > 0 || col == Width - 1 && row > 0)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col - 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (!(row == Height - 1 && col == 0 || row == 0 && col == Width - 1))
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col - 1] || magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col + 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					break;
-
-				case 90:
-
-					if (row == 0)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (row == Height - 1)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col] || magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col])
-						copyMagnitude[row * Width + col] = 0;
-
-					break;
-
-				case 135:
-
-					if (row == 0 && col > 0 || col == Width - 1 && row < Height - 1)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col - 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (col == 0 && row > 0 || row == Height - 1 && col < Width - 1)
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col + 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					else if (!(row == 0 && col == 0 || row == Height - 1 && col == Width - 1))
-					{
-						if (magnitudeImage[row * Width + col] <= magnitudeImage[(row - 1) * Width + col + 1] || magnitudeImage[row * Width + col] <= magnitudeImage[(row + 1) * Width + col - 1])
-							copyMagnitude[row * Width + col] = 0;
-					}
-
-					break;
-				}
-		}
-	}
-	return copyMagnitude;
-}
-void hysteresisThreashold(int* magnitudeImage, int* gradientDirections, int Width, int Height, int TH, int TL)
-{
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			if (magnitudeImage[row * Width + col] <= TL)
-				magnitudeImage[row * Width + col] = 0;
-
-			else if (magnitudeImage[row * Width + col] < TH && magnitudeImage[row * Width + col] > TL)
-			{
-
-				switch (gradientDirections[row * Width + col] - 90)
-				{
-				case -90:
-					if (row == 0)
-					{
-						if (!(magnitudeImage[(row + 1) * Width + col] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (row == Height - 1)
-					{
-						if (!(magnitudeImage[(row - 1) * Width + col] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (!(magnitudeImage[(row - 1) * Width + col] >= TH || magnitudeImage[(row + 1) * Width + col] >= TH))
-						magnitudeImage[row * Width + col] = 0;
-
-					break;
-
-				case -45:
-
-					if (row == 0 && col > 0 || col == Width - 1 && row < Height - 1)
-					{
-						if (!(magnitudeImage[(row + 1) * Width + col - 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (col == 0 && row > 0 || row == Height - 1 && col < Width - 1)
-					{
-						if (!(magnitudeImage[(row - 1) * Width + col + 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-					else if (!(row == 0 && col == 0 || row == Height - 1 && col == Width - 1))
-					{
-						if (!(magnitudeImage[(row - 1) * Width + col + 1] >= TH || magnitudeImage[(row + 1) * Width + col - 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					break;
-
-
-				case 0:
-					if (col == 0)
-					{
-						if (!(magnitudeImage[row * Width + col + 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (col == Width - 1)
-					{
-						if (!(magnitudeImage[row * Width + col - 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (!(magnitudeImage[row * Width + col - 1] >= TH || magnitudeImage[row * Width + col + 1] >= TH))
-						magnitudeImage[row * Width + col] = 0;
-
-					break;
-
-				case 45:
-					if (row == 0 && col < Width - 1 || col == 0 && row < Height - 1)
-					{
-						if (!(magnitudeImage[(row + 1) * Width + col + 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-					else if (row == Height - 1 && col > 0 || col == Width - 1 && row > 0)
-					{
-						if (!(magnitudeImage[(row - 1) * Width + col - 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					else if (!(row == Height - 1 && col == 0 || row == 0 && col == Width - 1))
-					{
-						if (!(magnitudeImage[(row - 1) * Width + col - 1] >= TH || magnitudeImage[(row + 1) * Width + col + 1] >= TH))
-							magnitudeImage[row * Width + col] = 0;
-					}
-
-					break;
-				}
-
-			}
-		}
-	}
-
-	convertToBinary(magnitudeImage, Width, Height);
-}
-
-void convertToBinary(int* magnitudeImage, int Width, int Height)
-{
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			if (magnitudeImage[row * Width + col] != 0)
-				magnitudeImage[row * Width + col] = 1;
-		}
-	}
-}
-
 int directionQuantize(int direction)
 {
 	// 4 yonde kuantalama yap [ 0, 45, 90, 135]
+
 	direction = direction % 180;
 
 	if (direction < 22.5 || direction > 157.5)
@@ -367,27 +89,317 @@ int directionQuantize(int direction)
 		return 135;
 }
 
+void magnitudeAndDirection(int* image, int& width, int& height, int* gradientX, int* gradientY, int* magnitudeImage, int* quantizedGradientDir, int* gradientDir, int filterSize)
+{
+	int newWidth = (width - filterSize + 1);
+	int newHeight = (height - filterSize + 1);
+
+	int totalX = 0;
+	int totalY = 0;
+	int direction = 0;
+	for (int row = 0; row < newHeight; row++)
+	{
+		for (int col = 0; col < newWidth; col++)
+		{
+			totalX = 0;
+			totalY = 0;
+			for (int i = 0; i < filterSize; i++)
+			{
+				for (int j = 0; j < filterSize; j++)
+				{
+					totalX += image[(row + i) * width + col + j] * gradientX[i * filterSize + j];
+					totalY += image[(row + i) * width + col + j] * gradientY[i * filterSize + j];
+				}
+			}
+			magnitudeImage[row * newWidth + col] = abs(totalX) + abs(totalY);						// g = |x| + |y|
+
+			direction = (int)(atan2(totalY, totalX) * 180 / PI);									// convert radian to angle
+			gradientDir[row * newWidth + col] = (direction + 360) % 360;							// convert angle to [0-360]
+			quantizedGradientDir[row * newWidth + col] = directionQuantize(direction + 360);		// convert angle to [0, 45, 90, 135]
+		}
+	}
+
+	width = newWidth;
+	height = newHeight;
+}
+
+
+int* createHistMatris(int* rawIndensity, int width, int height, int histSize)
+{
+	int* hist = (int*)calloc(histSize, sizeof(int));
+
+	for (int i = 0; i < width * height; i++)
+		hist[rawIndensity[i]]++;
+
+	return hist;
+}
+
+void deepCopy(int* hostMem, int* copyMem, int width, int height)
+{
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			copyMem[row * width + col] = hostMem[row * width + col];
+		}
+	}
+}
+
+int* nonMaximalSuppression(int* magnitudeImage, int* quantizedGradientDir, int width, int height)
+{
+
+	int* copyMagnitude = new int[width * height];
+	deepCopy(magnitudeImage, copyMagnitude, width, height);			
+
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			if (magnitudeImage[row * width + col] != 0)
+				switch (quantizedGradientDir[row * width + col])
+				{
+
+				case 0:
+					if (col == 0)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[row * width + col + 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (col == width - 1)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[row * width + col - 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (magnitudeImage[row * width + col] <= magnitudeImage[row * width + col - 1] || magnitudeImage[row * width + col] <= magnitudeImage[row * width + col + 1])
+						copyMagnitude[row * width + col] = 0;
+
+					break;
+
+				case 45:
+
+					if (row == 0 && col < width - 1 || col == 0 && row < height - 1)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col + 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (row == height - 1 && col > 0 || col == width - 1 && row > 0)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col - 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (!(row == height - 1 && col == 0 || row == 0 && col == width - 1))
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col - 1] || magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col + 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					break;
+
+				case 90:
+
+					if (row == 0)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (row == height - 1)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col] || magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col])
+						copyMagnitude[row * width + col] = 0;
+
+					break;
+
+				case 135:
+
+					if (row == 0 && col > 0 || col == width - 1 && row < height - 1)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col - 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (col == 0 && row > 0 || row == height - 1 && col < width - 1)
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col + 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					else if (!(row == 0 && col == 0 || row == height - 1 && col == width - 1))
+					{
+						if (magnitudeImage[row * width + col] <= magnitudeImage[(row - 1) * width + col + 1] || magnitudeImage[row * width + col] <= magnitudeImage[(row + 1) * width + col - 1])
+							copyMagnitude[row * width + col] = 0;
+					}
+
+					break;
+				}
+		}
+	}
+	return copyMagnitude;
+}
+
+void convertToBinary(int* magnitudeImage, int width, int height)
+{
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			if (magnitudeImage[row * width + col] != 0)
+				magnitudeImage[row * width + col] = 1;
+		}
+	}
+}
+
+void hysteresisThreashold(int* magnitudeImage, int* quantizedGradientDir, int width, int height, int TH, int TL)
+{
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			if (magnitudeImage[row * width + col] <= TL)
+				magnitudeImage[row * width + col] = 0;
+
+			else if (magnitudeImage[row * width + col] < TH && magnitudeImage[row * width + col] > TL)
+			{
+
+				switch (quantizedGradientDir[row * width + col] - 90)				// gradient yonunden kenar yonune gec
+				{
+
+				case -90:
+					
+					if (row == 0)
+					{
+						if (!(magnitudeImage[(row + 1) * width + col] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (row == height - 1)
+					{
+						if (!(magnitudeImage[(row - 1) * width + col] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (!(magnitudeImage[(row - 1) * width + col] >= TH || magnitudeImage[(row + 1) * width + col] >= TH))
+						magnitudeImage[row * width + col] = 0;
+
+					break;
+
+				case -45:
+
+					if (row == 0 && col > 0 || col == width - 1 && row < height - 1)
+					{
+						if (!(magnitudeImage[(row + 1) * width + col - 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (col == 0 && row > 0 || row == height - 1 && col < width - 1)
+					{
+						if (!(magnitudeImage[(row - 1) * width + col + 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+					else if (!(row == 0 && col == 0 || row == height - 1 && col == width - 1))
+					{
+						if (!(magnitudeImage[(row - 1) * width + col + 1] >= TH || magnitudeImage[(row + 1) * width + col - 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					break;
+
+				case 0:
+
+					if (col == 0)
+					{
+						if (!(magnitudeImage[row * width + col + 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (col == width - 1)
+					{
+						if (!(magnitudeImage[row * width + col - 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (!(magnitudeImage[row * width + col - 1] >= TH || magnitudeImage[row * width + col + 1] >= TH))
+						magnitudeImage[row * width + col] = 0;
+
+					break;
+
+				case 45:
+
+					if (row == 0 && col < width - 1 || col == 0 && row < height - 1)
+					{
+						if (!(magnitudeImage[(row + 1) * width + col + 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+					else if (row == height - 1 && col > 0 || col == width - 1 && row > 0)
+					{
+						if (!(magnitudeImage[(row - 1) * width + col - 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					else if (!(row == height - 1 && col == 0 || row == 0 && col == width - 1))
+					{
+						if (!(magnitudeImage[(row - 1) * width + col - 1] >= TH || magnitudeImage[(row + 1) * width + col + 1] >= TH))
+							magnitudeImage[row * width + col] = 0;
+					}
+
+					break;
+				}
+			}
+		}
+	}
+
+	convertToBinary(magnitudeImage, width, height);							// >= TH ( geriye TH dan buyuk olanlar kaldi )
+}
+
+void displayBinaryBitmap(int* intensityMat, int width, int height, System::Drawing::Bitmap^ bitmap)
+{
+	System::Drawing::Color color;
+
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			if (intensityMat[row * width + col] == 0)
+				color = System::Drawing::Color::FromArgb(0, 0, 0);
+
+			else
+				color = System::Drawing::Color::FromArgb(255, 255, 255);
+
+			bitmap->SetPixel(col, row, color);
+		}
+	}
+}
+
 int distanceQuantize(int distance)
 {
 	return rint(double(distance) / 4) * 4;
 }
 
-int* houghTransformLine(BYTE* raw_intensity, int imageW, int imageH, int* binaryImage, int Width, int Height, int& houghWidth, int& houghHeight)
+int* houghTransformLine(int* binaryImage, int width, int height, int imageW, int imageH, int& houghWidth, int& houghHeight)
 {
-	int imDiff = (imageW - Width) / 2;
+	int imDiff = (imageW - width) / 2;
 
-	houghHeight = (int)((imageW)*cos(atan2(imageH, imageW)) + imageH * sin(atan2(imageH, imageW)));	// goruntudeki max kosegen uzakligi 
-	houghWidth = 180;																									// [0,45,90,135]
+	houghHeight = (int)(sqrt(imageH * imageH + imageW * imageW));											// goruntudeki max kosegen uzakligi 
+
+	houghWidth = 180;
 
 	int* houghSpace = (int*)calloc(houghHeight * houghWidth, sizeof(int));
 
 	int distance = 0;
 
-	for (int row = 0; row < Height; row++)
+	for (int row = 0; row < height; row++)
 	{
-		for (int col = 0; col < Width; col++)
+		for (int col = 0; col < width; col++)
 		{
-			if (binaryImage[row * Width + col] == 1)
+			if (binaryImage[row * width + col] == 1)
 			{
 				for (int q = 0; q < 180; q++)
 				{
@@ -401,9 +413,12 @@ int* houghTransformLine(BYTE* raw_intensity, int imageW, int imageH, int* binary
 	return houghSpace;
 }
 
-bool isExist(std::vector <int>& MaxsTemp, std::vector <int>& MaxsD, std::vector <int>& MaxsQ, int value, int d, int Q)
+bool isExist(std::vector <int>& MaxsD, std::vector <int>& MaxsQ, int d, int Q)
 {
-	for (int i = 0; i < MaxsTemp.size(); i++)
+	// Maximum secilen nokta, MaxsD icerisindekiler ile bir benzerlik barindiriyorsa true doner
+	// Benzerlik kontrolu distance(d) ve angle(Q) degerlerine gore yapilir
+
+	for (int i = 0; i < MaxsD.size(); i++)
 	{
 		if ((d - DISTQUANTIZE <= MaxsD[i] && MaxsD[i] <= d + DISTQUANTIZE) && (Q - ANGLEQUANTIZE <= MaxsQ[i] && MaxsQ[i] <= Q + ANGLEQUANTIZE))
 			return true;
@@ -414,8 +429,6 @@ bool isExist(std::vector <int>& MaxsTemp, std::vector <int>& MaxsD, std::vector 
 void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int numOfMaks)
 {
 	int tempD = 0, tempQ = 0, temp = 0, temp2 = 0;
-	std::vector <int> MaxsTemp;
-
 
 	while (MaxsD.size() < numOfMaks)
 	{
@@ -427,7 +440,7 @@ void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vecto
 		{
 			for (int Q = 0; Q < houghWidth; Q++)
 			{
-				if (houghSpace[d * houghWidth + Q] >= temp && !isExist(MaxsTemp, MaxsD, MaxsQ, houghSpace[d * houghWidth + Q], d, Q))
+				if (houghSpace[d * houghWidth + Q] >= temp && !isExist( MaxsD, MaxsQ, d, Q))			// benzer olan noktalar max olarak alinmaz
 				{
 					tempD = d;
 					tempQ = Q;
@@ -436,16 +449,15 @@ void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vecto
 			}
 		}
 
-		if (temp == temp2)
+		if (temp == temp2)																				// daha fazla maksimum deger yoksa
 			break;
 
-		MaxsTemp.push_back(temp);
 		MaxsD.push_back(tempD);
 		MaxsQ.push_back(tempQ);
 	}
 }
 
-void controlMaxEdge(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ)
+void controlMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ)
 {
 
 	int imDiff = (imWidth - Width) / 2;
@@ -473,7 +485,6 @@ void controlMaxEdge(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryE
 			}
 		}
 	}
-
 
 
 	//for (int i = 0; i < MaxsD.size(); i++)
@@ -556,12 +567,14 @@ void controlMaxEdge(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryE
 void displayLineBitmap(BYTE* raw_intensity, int imWidth, int imHeight, System::Drawing::Bitmap^ bitmap)
 {
 	System::Drawing::Color color;
+
 	for (int row = 0; row < imHeight; row++)
 	{
 		for (int col = 0; col < imWidth; col++)
 		{
 			if (raw_intensity[row * imWidth + col] == REDPIXEL)
 				color = System::Drawing::Color::FromArgb(255, 0, 0);
+
 			else
 				color = System::Drawing::Color::FromArgb(raw_intensity[row * imWidth + col] % 255, raw_intensity[row * imWidth + col] % 255, raw_intensity[row * imWidth + col] % 255);
 
@@ -569,6 +582,59 @@ void displayLineBitmap(BYTE* raw_intensity, int imWidth, int imHeight, System::D
 		}
 	}
 }
+
+int* houghTransformCircle(int* binaryImage, int* gradientDir, int width, int height, int& houghWidth, int& houghHeight, int circleR, int imageW, int imageH)
+{
+	int imDiff = (imageW - width) / 2;
+
+	houghHeight = (int)(sqrt(imageH * imageH + imageW * imageW));											// goruntudeki max kosegen uzakligi 
+
+	houghWidth = 180;																				
+
+	int* houghSpace = (int*)calloc(houghHeight * houghWidth, sizeof(int));
+
+	int distance = 0;
+	int a = 0, b = 0;
+
+	for (int row = 0; row < height; row++)
+	{
+		for (int col = 0; col < width; col++)
+		{
+			if (binaryImage[row * width + col] == 1)
+			{
+				if (180 < gradientDir[row * width + col] <= 270)
+				{
+					a = col + circleR * abs(cos((gradientDir[row * width + col] - 180) * PI / 180));
+					b = row + circleR * abs(sin((gradientDir[row * width + col] - 180) * PI / 180));
+
+				}
+				else if (90 < gradientDir[row * width + col] <= 180)
+				{
+					a = col + circleR * abs(cos((90 - (gradientDir[row * width + col] - 90)) * PI / 180));
+					b = row - circleR * abs(sin((90 - (gradientDir[row * width + col] - 90)) * PI / 180));
+
+				}
+				else if (gradientDir[row * width + col] <= 90)
+				{
+					a = col - circleR * abs(cos(gradientDir[row * width + col] * PI / 180));
+					b = row - circleR * abs(sin(gradientDir[row * width + col] * PI / 180));
+
+				}
+				else if (270 < gradientDir[row * width + col] <= 360)
+				{
+					a = col - circleR * abs(cos((90 - (gradientDir[row * width + col] - 270)) * PI / 180));
+					b = row + circleR * abs(sin((90 - (gradientDir[row * width + col] - 270)) * PI / 180));
+
+				}
+				distance = a * cos(atan2(b, a)) + b * sin(atan2(b, a));						// distance calculate
+				houghSpace[distance * houghWidth + int(atan2(b, a) * (180 / PI))]++;		// convert radian to angle
+			}
+		}
+	}
+
+	return houghSpace;
+}
+
 void displayHoughBitmap(int* houghSpace, int houghWidth, int houghHeight, System::Drawing::Bitmap^ bitmap)
 {
 	System::Drawing::Color color;
@@ -584,58 +650,6 @@ void displayHoughBitmap(int* houghSpace, int houghWidth, int houghHeight, System
 			bitmap->SetPixel(col, row, color);
 		}
 	}
-}
-
-int* houghTransformCircle(int* binaryImage, int* gradientDirections, int* directions, int Width, int Height, int& houghWidth, int& houghHeight, int circleR, int imageW, int imageH)
-{
-	int imDiff = (imageW - Width) / 2;
-
-	houghHeight = (int)(sqrt(imageH * imageH + imageW * imageW));											// goruntudeki max kosegen uzakligi 
-
-	houghWidth = 180;																					// [0,45,90,135]
-
-	int* houghSpace = (int*)calloc(houghHeight * houghWidth, sizeof(int));
-
-	int distance = 0;
-	int a = 0, b = 0;
-
-	for (int row = 0; row < Height; row++)
-	{
-		for (int col = 0; col < Width; col++)
-		{
-			if (binaryImage[row * Width + col] == 1)
-			{
-				if (180 < directions[row * Width + col] <= 270)
-				{
-					a = col + circleR * abs(cos((directions[row * Width + col] - 180) * PI / 180));
-					b = row + circleR * abs(sin((directions[row * Width + col] - 180) * PI / 180));
-
-				}
-				else if (90 < directions[row * Width + col] <= 180)
-				{
-					a = col + circleR * abs(cos((90 - (directions[row * Width + col] - 90)) * PI / 180));
-					b = row - circleR * abs(sin((90 - (directions[row * Width + col] - 90)) * PI / 180));
-
-				}
-				else if (directions[row * Width + col] <= 90)
-				{
-					a = col - circleR * abs(cos(directions[row * Width + col] * PI / 180));
-					b = row - circleR * abs(sin(directions[row * Width + col] * PI / 180));
-
-				}
-				else if (270 < directions[row * Width + col] <= 360)
-				{
-					a = col - circleR * abs(cos((90 - (directions[row * Width + col] - 270)) * PI / 180));
-					b = row + circleR * abs(sin((90 - (directions[row * Width + col] - 270)) * PI / 180));
-
-				}
-				distance = a * cos(atan2(b, a)) + b * sin(atan2(b, a));
-				houghSpace[distance * houghWidth + int(atan2(b, a) * (180 / PI))]++;
-			}
-		}
-	}
-
-	return houghSpace;
 }
 
 int newCoordinate(int& x, int& y, int angle, int radius)
@@ -663,7 +677,7 @@ void drawCircle(BYTE* buffer, int width, int x, int y, int radius)
 	}
 }
 
-int controlMaxCircle(BYTE* raw_intensity, int imWidth, int imHeight, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int circleR)
+int drawMaxCircle(BYTE* raw_intensity, int imWidth, int Width, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int circleR)
 {
 	int imDiff = (imWidth - Width) / 2;
 	for (int i = 0; i < MaxsD.size(); i++)
