@@ -2,10 +2,10 @@
 
 * GUI: Windows Form Application / C++
 
-# Hedef:
+## Hedef:
 Görüntü üzerinde Canny Edge Detection işlemi ile kenar tespitinin yapılması sonucunda, Hough Space algoritması kullanılarak image üzerinde line/circle tespiti.
 
-# Steps:
+## Steps:
 1.	Intensity image üzerine 2.Mertebeden [3 * 3] Gaussian Filter kullanarak Smoothing uygula
 2.	Smoothing uygulanmıs görüntüden Magnitude ve Direction bilgilerini bul
 3.	Magnitude Image üzerinden histogram bilgilerini oluştur
@@ -27,3 +27,13 @@ Görüntü üzerinde Canny Edge Detection işlemi ile kenar tespitinin yapılmas
     - 9.4.	Bulunan noktalara Circle çiz
     - 9.5.	Sonucu ekrana yansıt
 10.	Hough Space’i ekrana yansıt
+
+## Sample screenshots 
+- Sample 1 is Circle Detection 
+  - ![alt text](https://github.com/fbasatemur/circle_and_line_detection_with_Hough_Transform/blob/master/screenshots/circle_ss1.png "Circle ScreenShot 1")
+  
+- Sample 2 is Circle Detection 
+  - ![alt text](https://github.com/fbasatemur/circle_and_line_detection_with_Hough_Transform/blob/master/screenshots/circle_ss2.png "Circle ScreenShot 2")
+  
+- Sample 3 is Line Detection 
+  - ![alt text](https://github.com/fbasatemur/circle_and_line_detection_with_Hough_Transform/blob/master/screenshots/line_ss.png "Line ScreenShot")
