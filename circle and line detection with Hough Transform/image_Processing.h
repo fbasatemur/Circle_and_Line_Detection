@@ -21,7 +21,7 @@ int* houghTransformLine(int* binaryImage, int width, int height, int imageW, int
 
 void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vector <int>& MaxsD, std::vector<int>& MaxsQ, int numOfMaks);
 
-void controlMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ);
+void markMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ);
 
 void displayLineBitmap(BYTE* raw_intensity, int imWidth, int imHeight, System::Drawing::Bitmap^ bitmap);
 

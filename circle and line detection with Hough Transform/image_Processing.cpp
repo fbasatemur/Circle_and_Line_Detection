@@ -5,11 +5,10 @@
 #include <iostream>
 
 #define PI 3.14159265
-#define MIN(a,b) ((a < b) ? a : b)
-#define MAX(a,b) ((a > b) ? a : b)
 #define REDPIXEL 2
 #define ANGLEQUANTIZE 5
-#define DISTQUANTIZE 10
+#define DISTQUANTIZECIRCLE 10
+#define DISTQUANTIZELINE 5
 
 //int* sobelFilter(int* raw_intensity, int& Width, int& Height, int* gradientX, int* gradientY, int filterSize)
 //{
@@ -385,8 +384,6 @@ int distanceQuantize(int distance)
 
 int* houghTransformLine(int* binaryImage, int width, int height, int imageW, int imageH, int& houghWidth, int& houghHeight)
 {
-	int imDiff = (imageW - width) / 2;
-
 	houghHeight = (int)(sqrt(imageH * imageH + imageW * imageW));											// goruntudeki max kosegen uzakligi 
 
 	houghWidth = 180;
@@ -403,7 +400,7 @@ int* houghTransformLine(int* binaryImage, int width, int height, int imageW, int
 			{
 				for (int q = 0; q < 180; q++)
 				{
-					distance = distanceQuantize(abs((col + imDiff) * cos(q * PI / 180) + (row + imDiff) * sin(q * PI / 180)));
+					distance = abs((col) * cos(q * PI / 180) + (row) * sin(q * PI / 180));
 					houghSpace[distance * houghWidth + q]++;
 				}
 			}
@@ -420,7 +417,7 @@ bool isExist(std::vector <int>& MaxsD, std::vector <int>& MaxsQ, int d, int Q)
 
 	for (int i = 0; i < MaxsD.size(); i++)
 	{
-		if ((d - DISTQUANTIZE <= MaxsD[i] && MaxsD[i] <= d + DISTQUANTIZE) && (Q - ANGLEQUANTIZE <= MaxsQ[i] && MaxsQ[i] <= Q + ANGLEQUANTIZE))
+		if ((d - DISTQUANTIZECIRCLE <= MaxsD[i] && MaxsD[i] <= d + DISTQUANTIZECIRCLE) && (Q - ANGLEQUANTIZE <= MaxsQ[i] && MaxsQ[i] <= Q + ANGLEQUANTIZE))
 			return true;
 	}
 	return false;
@@ -457,9 +454,8 @@ void searchMaxPoint(int* houghSpace, int houghWidth, int houghHeight, std::vecto
 	}
 }
 
-void controlMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ)
+void markMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width, int Height, std::vector <int>& MaxsD, std::vector<int>& MaxsQ)
 {
-
 	int imDiff = (imWidth - Width) / 2;
 	int distance = 0;
 
@@ -473,9 +469,9 @@ void controlMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width
 				{
 					for (int i = 0; i < MaxsD.size(); i++)
 					{
-						distance = distanceQuantize(abs((col)*cos(MaxsQ[i] * PI / 180) + (row)*sin(MaxsQ[i] * PI / 180)));
-
-						if (MaxsD[i] == distance)
+						distance = abs(col * cos(MaxsQ[i] * PI / 180) + row * sin(MaxsQ[i] * PI / 180));
+						
+						if (distance - DISTQUANTIZELINE <= MaxsD[i] && MaxsD[i] <= distance + DISTQUANTIZELINE)
 						{
 							raw_intensity[(row + imDiff) * imWidth + col + imDiff] = REDPIXEL;
 							break;
@@ -485,83 +481,6 @@ void controlMaxEdge(BYTE* raw_intensity, int imWidth, int* binaryEdge, int Width
 			}
 		}
 	}
-
-
-	//for (int i = 0; i < MaxsD.size(); i++)
-	//{
-	//	int Q = MaxsQ[i];
-	//	int d = MaxsD[i];
-
-	//	int col = (int)std::abs(d * cos(Q * PI / 180));
-	//	int row = (int)std::abs(d * sin(Q * PI / 180));
-	//	int tempRow = row;
-	//	int tempCol = col;
-	//	switch (directionQuantize(Q)- 90)
-	//	{
-	//	case -90:
-	//		while ((row + imDiff) != 0)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row--;
-	//		}
-	//		row = tempRow;
-	//		while ((row + imDiff) != imHeight - 1)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row++;
-	//		}
-	//		break;
-
-	//	case -45:
-
-	//		while ((row + imDiff) != 0 && col + imDiff != imWidth - 1)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row--;
-	//			col++;
-	//		}
-	//		row = tempRow;
-	//		col = tempCol;
-	//		while ((row + imDiff) != imHeight - 1 && col + imDiff != 0)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row++;
-	//			col--;
-	//		}
-	//		break;
-
-	//	case 0:
-	//		while (col + imDiff != 0)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			col--;
-	//		}
-	//		col = tempCol;
-	//		while (col + imDiff != imWidth - 1)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			col++;
-	//		}
-	//		break;
-
-	//	case 45:
-	//		while ((row + imDiff) != 0 && col + imDiff != 0)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row--;
-	//			col--;
-	//		}
-	//		row = tempRow;
-	//		col = tempCol;
-	//		while ((row + imDiff) != imHeight - 1 && col + imDiff != imWidth - 1)
-	//		{
-	//			raw_intensity[(row + imDiff) * imWidth + col + imDiff] = '*';
-	//			row++;
-	//			col++;
-	//		}
-	//		break;
-	//	}
-
 }
 
 void displayLineBitmap(BYTE* raw_intensity, int imWidth, int imHeight, System::Drawing::Bitmap^ bitmap)

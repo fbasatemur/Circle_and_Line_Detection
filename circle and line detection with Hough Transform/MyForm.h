@@ -398,7 +398,7 @@ namespace Form_Empty {
 
 				searchMaxPoint(houghSpace, houghWidth, houghHeight, maxsD, maxsQ, numOfMaxEdge);
 
-				controlMaxEdge(raw_intensity, imageWidth, magnitudeImage, width, height, maxsD, maxsQ);
+				markMaxEdge(raw_intensity, imageWidth, magnitudeImage, width, height, maxsD, maxsQ);
 
 				Bitmap^ surfaceBmp4 = gcnew Bitmap(imageWidth, imageHeight);
 				pictureBox4->Image = surfaceBmp4;
